@@ -1,0 +1,13 @@
+{
+  "name": "irmyang/database",
+  "type": "library",
+  "license": "MIT",
+  "description": "Webman plugin irmyang/database",
+  "require": {
+  },
+  "autoload": {
+    "psr-4": {
+      "Irmyang\\Database\\": "src"
+    }
+  }
+}
