@@ -2,7 +2,7 @@
 
 namespace Irmyang\Database;
 
-use App\Models\DataBase\LinkageAttribute as ModelLinkageAttribute;
+use Irmyang\Database\LinkageAttribute;
 use support\Cache;
 use Irmyang\Database\TableField;
 use Irmyang\Database\Base;
@@ -67,7 +67,7 @@ class Linkage extends Base
             $this->setAttributes('msg','不存在');
             return false;
         }
-        $son_lists=ModelLinkageAttribute::select(['id','title','parent_id'])->where('linkage_id',$item->id)->orderBy('sort','asc')->orderBy($this->parent_key,'asc')->get();
+        $son_lists=LinkageAttribute::select(['id','title','parent_id'])->where('linkage_id',$item->id)->orderBy('sort','asc')->orderBy($this->parent_key,'asc')->get();
         $item->setAttributes('son_lists',listsToGrade($son_lists));
         self::$type_grades[$key]=$item;
         Cache::put($key,self::$type_grades[$key]);
