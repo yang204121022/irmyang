@@ -31,7 +31,7 @@ class TableField extends Base
      */
     function getFieldList($object='')
     {
-        $table_name=$object->getTable();
+        $table_name=$object->getConnection()->getTablePrefix().$object->getTable();
         $table_db=new Table;
         $connection=$this->getConnectionName();
         $table_db=$table_db->setConnection($connection);
@@ -54,13 +54,13 @@ class TableField extends Base
             $default_lists[$v['field']]=$v;
         }
         //字段表
-        $table=$this->getTable();
+        $table=$this->getConnection()->getTablePrefix().$this->getTable();
         if(!$table_db->isTable($table,$this))
         {
             $this->setAttributes('msg',$table_db->msg);
             return false;
         }
-
+        $sort=0;
         $lists=$this->where('table_name',$table_name)->orderBy('sort','ASC')->get();
         if($lists)
         {
@@ -75,6 +75,7 @@ class TableField extends Base
                 {
                     unset($table_field_lists[$v->field]);
                 }
+                $sort=$v->sort;
             }
         }
         if($table_field_lists)
@@ -88,22 +89,22 @@ class TableField extends Base
                 {
                     $db->field_type=$default_lists[$field]['field_type'];
                     $db->comment=$default_lists[$field]['comment'];
-                    if(!empty($default_lists[$field]['field_length']))  $db->field_length=$default_lists[$field]['field_length'];
-                    if(!empty($default_lists[$field]['default']))  $db->field_default=$default_lists[$field]['default'];
-                    if(!empty($default_lists[$field]['field_decimal']))  $db->field_decimal=$default_lists[$field]['field_decimal'];
-                    if(!empty($default_lists[$field]['model']))  $db->model=$default_lists[$field]['model'];
-                    if(!empty($default_lists[$field]['model_field']))  $db->model_field=$default_lists[$field]['model_field'];
-                    if(!empty($default_lists[$field]['null']))  $db->null=$default_lists[$field]['null'];
-                    if(!empty($default_lists[$field]['admin_list_show']))  $db->admin_list_show=$default_lists[$field]['admin_list_show'];
-                    if(!empty($default_lists[$field]['admin_list_fold']))  $db->admin_list_fold=$default_lists[$field]['admin_list_fold'];
-                    if(!empty($default_lists[$field]['admin_list_custom']))  $db->admin_list_custom=$default_lists[$field]['admin_list_custom'];
-                    if(!empty($default_lists[$field]['admin_footer_edit']))  $db->admin_list_show=$default_lists[$field]['admin_footer_edit'];
-                    if(!empty($default_lists[$field]['admin_search']))  $db->admin_search=$default_lists[$field]['admin_search'];
-                    if(!empty($default_lists[$field]['admin_list']))  $db->admin_list=$default_lists[$field]['admin_list'];
-                    if(!empty($default_lists[$field]['admin_add_show']))  $db->admin_add_show=$default_lists[$field]['admin_add_show'];
-                    if(!empty($default_lists[$field]['admin_edit_show']))  $db->admin_edit_show=$default_lists[$field]['admin_edit_show'];
-                    if(!empty($default_lists[$field]['admin_add']))  $db->admin_add=$default_lists[$field]['admin_add'];
-                    if(!empty($default_lists[$field]['admin_edit']))  $db->admin_edit=$default_lists[$field]['admin_edit'];
+                    if(isset($default_lists[$field]['field_length']))  $db->field_length=$default_lists[$field]['field_length'];
+                    if(isset($default_lists[$field]['default']))  $db->field_default=$default_lists[$field]['default'];
+                    if(isset($default_lists[$field]['field_decimal']))  $db->field_decimal=$default_lists[$field]['field_decimal'];
+                    if(isset($default_lists[$field]['model']))  $db->model=$default_lists[$field]['model'];
+                    if(isset($default_lists[$field]['model_field']))  $db->model_field=$default_lists[$field]['model_field'];
+                    if(isset($default_lists[$field]['null']))  $db->null=$default_lists[$field]['null'];
+                    if(isset($default_lists[$field]['admin_list_show']))  $db->admin_list_show=$default_lists[$field]['admin_list_show'];
+                    if(isset($default_lists[$field]['admin_list_fold']))  $db->admin_list_fold=$default_lists[$field]['admin_list_fold'];
+                    if(isset($default_lists[$field]['admin_list_custom']))  $db->admin_list_custom=$default_lists[$field]['admin_list_custom'];
+                    if(isset($default_lists[$field]['admin_footer_edit']))  $db->admin_list_show=$default_lists[$field]['admin_footer_edit'];
+                    if(isset($default_lists[$field]['admin_search']))  $db->admin_search=$default_lists[$field]['admin_search'];
+                    if(isset($default_lists[$field]['admin_list']))  $db->admin_list=$default_lists[$field]['admin_list'];
+                    if(isset($default_lists[$field]['admin_add_show']))  $db->admin_add_show=$default_lists[$field]['admin_add_show'];
+                    if(isset($default_lists[$field]['admin_edit_show']))  $db->admin_edit_show=$default_lists[$field]['admin_edit_show'];
+                    if(isset($default_lists[$field]['admin_add']))  $db->admin_add=$default_lists[$field]['admin_add'];
+                    if(isset($default_lists[$field]['admin_edit']))  $db->admin_edit=$default_lists[$field]['admin_edit'];
                 }
                 else
                 {
@@ -122,6 +123,8 @@ class TableField extends Base
                     $db->admin_list_show=1;//列表展示
                     $db->admin_edit=1;//修改
                 }
+                $sort++;
+                $db->sort=$sort;
                 $db->save();
             }
             $lists=$this->where('table_name',$table_name)->orderBy('sort','ASC')->get();
@@ -277,6 +280,9 @@ class TableField extends Base
             case 'icon'://图标
             case 'linkage'://联动模型
             case 'book_grade'://课本章节
+            case 'password'://密码
+            case 'email'://邮箱
+            case 'mobile'://手机
                 $field_length or $field_length=200;
                 $query.='varchar('.$field_length.') ';
                 break;
@@ -302,11 +308,11 @@ class TableField extends Base
                 $default or $default=0;
                 $field_decimal or $field_decimal=2;
                 $field_length or $field_length=6;
-
                 $query.=$item['field_type'].'('.$field_length.','.$field_decimal.') ';
                 break;
             case 'images'://多图
             case 'text'://文本
+            case 'baidu_edit'://百度编辑器
                 $query.='text ';
                 $default='';
                 break;
@@ -362,6 +368,7 @@ class TableField extends Base
         $lists['linkage']=['title'=>'联动模型'];
         $lists['book_grade']=['title'=>'课本章节'];
         $lists['modular-more']=['title'=>'模块多联'];
+        $lists['password']=['title'=>'密码'];
         if($type=='array')
         {
             $list=[];
@@ -398,17 +405,17 @@ class TableField extends Base
         $field_lists[]=['field'=>'is_multiple','field_length'=>10,'field_decimal'=>0,'default'=>0,'comment'=>'多选','field_type'=>'int'];
 
         $field_lists[]=['field'=>'null','field_length'=>2,'field_decimal'=>0,'default'=>0,'comment'=>'允许空','field_type'=>'switch'];
-        $field_lists[]=['field'=>'admin_list_show','field_length'=>2,'field_decimal'=>0,'default'=>0,'comment'=>'列表展示','field_type'=>'switch'];
+        $field_lists[]=['field'=>'admin_list_show','field_length'=>2,'field_decimal'=>0,'default'=>1,'comment'=>'列表展示','field_type'=>'switch'];
         $field_lists[]=['field'=>'admin_list_fold','field_length'=>2,'field_decimal'=>0,'default'=>0,'comment'=>'折叠展示','field_type'=>'switch'];
         $field_lists[]=['field'=>'admin_list_custom','field_length'=>2,'field_decimal'=>0,'default'=>0,'comment'=>'自定义','field_type'=>'switch'];
         $field_lists[]=['field'=>'admin_footer_edit','field_length'=>2,'field_decimal'=>0,'default'=>0,'comment'=>'底部修改','field_type'=>'switch'];
 
         $field_lists[]=['field'=>'admin_search','field_length'=>2,'field_decimal'=>0,'default'=>0,'comment'=>'搜索','field_type'=>'switch'];
         $field_lists[]=['field'=>'admin_list','field_length'=>2,'field_decimal'=>0,'default'=>0,'comment'=>'列表修改','field_type'=>'switch'];
-        $field_lists[]=['field'=>'admin_add_show','field_length'=>2,'field_decimal'=>0,'default'=>0,'comment'=>'添加展示','field_type'=>'switch'];
-        $field_lists[]=['field'=>'admin_edit_show','field_length'=>2,'field_decimal'=>0,'default'=>0,'comment'=>'修改展示','field_type'=>'switch'];
-        $field_lists[]=['field'=>'admin_add','field_length'=>2,'field_decimal'=>0,'default'=>0,'comment'=>'添加修改','field_type'=>'switch'];
-        $field_lists[]=['field'=>'admin_edit','field_length'=>2,'field_decimal'=>0,'default'=>0,'comment'=>'修改修改','field_type'=>'switch'];
+        $field_lists[]=['field'=>'admin_add_show','field_length'=>2,'field_decimal'=>0,'default'=>1,'comment'=>'添加展示','field_type'=>'switch'];
+        $field_lists[]=['field'=>'admin_edit_show','field_length'=>2,'field_decimal'=>0,'default'=>1,'comment'=>'修改展示','field_type'=>'switch'];
+        $field_lists[]=['field'=>'admin_add','field_length'=>2,'field_decimal'=>0,'default'=>1,'comment'=>'添加修改','field_type'=>'switch'];
+        $field_lists[]=['field'=>'admin_edit','field_length'=>2,'field_decimal'=>0,'default'=>1,'comment'=>'修改修改','field_type'=>'switch'];
         $field_lists[]=['field'=>'sort','field_length'=>10,'field_decimal'=>0,'default'=>0,'comment'=>'排序','field_type'=>'int'];
         return $field_lists;
     }

@@ -16,8 +16,7 @@ class Table extends Base
     {
         if(!$table)
         {
-            $this->setAttributes('msg',$table.'表不能为空1');
-            return false;
+            $table=$this->getConnection()->getTablePrefix() . $object->getTable();
         }
         $lists=$this->getList($table);
         if(!$lists)
